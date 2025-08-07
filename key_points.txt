@@ -1,0 +1,9 @@
+Build a agent which repilies to queries
+Add a filter for answer style like piratey or trump style
+Add a vector db
+Add langchain tools
+Learn about this
+    - Use mongodb for chat memory and users
+    - For knowledge base use Chroma or Supabase
+
+use stream
