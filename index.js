@@ -415,6 +415,18 @@ const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 
 const chatForSlack = async (question) => {};
 
+app.post('/test', async (req, res) => {
+
+  const { question } = req.body;
+
+  const output = await workflowApp.invoke({ messages: question }, config);
+    const { content } = output.messages[output.messages.length - 1];
+
+  console.log('output', content);
+  res.send(content);
+
+} )
+
 app.post("/slack/events", async (req, res) => {
   console.log("got slack", req.body);
   // const message = req?.body?.event?.text;
@@ -429,6 +441,9 @@ app.post("/slack/events", async (req, res) => {
   console.log("event type", event.type);
 
   const output = await workflowApp.invoke({ messages: text }, config);
+  // console.log('output', output);
+      const { content } = output.messages[output.messages.length - 1];
+    console.log("content", content);
 
   // ignore bot's own msg
   if (event.bot_id) {
@@ -440,7 +455,7 @@ app.post("/slack/events", async (req, res) => {
   if (event.type === "message" && !event.bot_id) {
     await slackClient.chat.postMessage({
       channel: event.channel,
-      text: `${output}>! 👋`,
+      text: `${content}! 👋`,
     });
   }
 
