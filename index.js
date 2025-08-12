@@ -439,16 +439,20 @@ app.post("/slack/events", async (req, res) => {
 
   const event = req.body.event;
   console.log("event type", event.type);
+    // ignore bot's own msg
+  if (event.bot_id) {
+    return res.sendStatus(200);
+  }
+
+  // acknowledge slack
+  res.status(200).send();
+
 
   const output = await workflowApp.invoke({ messages: text }, config);
   // console.log('output', output);
       const { content } = output.messages[output.messages.length - 1];
     console.log("content", content);
 
-  // ignore bot's own msg
-  if (event.bot_id) {
-    return res.sendStatus(200);
-  }
 
   const thread_id = event.thread_ts || event.ts;
 
