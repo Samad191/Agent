@@ -377,13 +377,6 @@ app.post("/chat", async (req, res) => {
     const thread_id = req.body.thread_id || uuidv4();
     config.configurable.thread_id = thread_id;
 
-    // if (!chatHistories[thread_id]) chatHistories[thread_id] = [];
-
-    // chatHistories[thread_id].push({
-    //   role: "user",
-    //   content: question,
-    // });
-
     if (!chatHistories[thread_id]) {
       chatHistories[thread_id] = [
         new SystemMessage("You are a helpful assistant"),
@@ -420,32 +413,43 @@ app.use(bodyParser.json());
 
 const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
 
+const chatForSlack = async (question) => {};
 
 app.post("/slack/events", async (req, res) => {
-  
-  console.log('got slack', req.body)
+  console.log("got slack", req.body);
+  // const message = req?.body?.event?.text;
+
   if (req.body.type === "url_verification") {
     return res.send(req.body.challenge);
   }
-    const { text } = req.body.event;
-  console.log('text ', text);
+  const { text } = req.body.event;
+  console.log("text ", text);
 
- const event = req.body.event;
- console.log('event type', event.type);
+  const event = req.body.event;
+  console.log("event type", event.type);
 
- if (event.type === "message" && !event.bot_id) { 
-  await slackClient.chat.postMessage({
-    channel: event.channel,
-    text: `Hello <@${event.user}>! 👋`
-  });
-}
+  const output = await workflowApp.invoke({ messages: text }, config);
+
+  // ignore bot's own msg
+  if (event.bot_id) {
+    return res.sendStatus(200);
+  }
+
+  const thread_id = event.thread_ts || event.ts;
+
+  if (event.type === "message" && !event.bot_id) {
+    await slackClient.chat.postMessage({
+      channel: event.channel,
+      text: `${output}>! 👋`,
+    });
+  }
 
   res.sendStatus(200);
 });
 
-app.get('/', (req, res) => {
-  res.send('Hello world!')
-})
+app.get("/", (req, res) => {
+  res.send("Hello world!");
+});
 
 const PORT = process.env.PORT || 4000;
 
@@ -453,9 +457,6 @@ app.listen(PORT, () => {
   console.clear();
   console.log("Server is running on port 4000");
 });
-
-
-
 
 // slack bot token
 // xoxb-9336055457025-9321932608725-o01UzEh42wf1jfNCtZU0SDiw
