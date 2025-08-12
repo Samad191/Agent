@@ -25,6 +25,7 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { RunnableLambda, RunnablePassthrough } from "@langchain/core/runnables";
 import bodyParser from "body-parser";
+import { WebClient } from "@slack/web-api";
 
 function extractSummaryText(obj) {
   return (
@@ -417,24 +418,34 @@ app.post("/chat", async (req, res) => {
 
 app.use(bodyParser.json());
 
+const slackClient = new WebClient(process.env.SLACK_BOT_TOKEN);
+
+
 app.post("/slack/events", async (req, res) => {
   
-  console.log('got slack')
+  console.log('got slack', req.body)
   if (req.body.type === "url_verification") {
     return res.send(req.body.challenge);
   }
+    const { text } = req.body.event;
+  console.log('text ', text);
 
  const event = req.body.event;
+ console.log('event type', event.type);
 
-  if (event.type === "app_mention") {
-    await slackClient.chat.postMessage({
-      channel: event.channel,
-      text: `Hello <@${event.user}>! 👋`
-    });
-  }
+ if (event.type === "message" && !event.bot_id) { 
+  await slackClient.chat.postMessage({
+    channel: event.channel,
+    text: `Hello <@${event.user}>! 👋`
+  });
+}
 
   res.sendStatus(200);
 });
+
+app.get('/', (req, res) => {
+  res.send('Hello world!')
+})
 
 const PORT = process.env.PORT || 4000;
 
